@@ -165,7 +165,7 @@ Esse exemplo documenta o procedimento; não é uma confirmação de backup execu
 
 Para reverter código, prefira um commit de reversão revisado em `main`, que aciona o mesmo workflow. Antes de futuras migrações, faça backup e verifique compatibilidade com a versão anterior; o rollback automático não restaura dados.
 
-Releases antigas e tentativas interrompidas são preservadas. Monitore espaço em disco. Qualquer limpeza deve conferir caminhos absolutos dentro de `/srv/financialapp`, preservar `releases/current`, dados e backups, e não tocar nos outros projetos.
+O deploy em si preserva releases antigas e tentativas interrompidas. Uma rotina diária separada, autorizada após a revisão de recursos, mantém a ativa e duas versões anteriores, com proteções adicionais para processos, dependências e releases recentes. Consulte [retenção por projeto](vps/README.md). Dados e backups não fazem parte dessa limpeza.
 
 ## Pendências funcionais
 

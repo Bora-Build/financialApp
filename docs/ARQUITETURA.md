@@ -49,6 +49,6 @@ flowchart LR
 | Aplicação | 512 MiB, até 1 CPU |
 | MySQL | 768 MiB, até 0,75 CPU |
 
-Releases antigas permanecem no disco. O rollback automático cobre código e depende da compatibilidade com o banco. A rotina não realiza backup, migração ou limpeza automática de releases.
+O script de deploy preserva releases antigas; uma [automação diária separada](../deploy/vps/README.md), autorizada após a revisão de recursos, mantém a ativa e duas anteriores quando não há referências adicionais. O rollback automático cobre código e depende da compatibilidade com o banco. O deploy não realiza backup ou migração.
 
 Os arquivos em `deploy/` são modelos versionados de infraestrutura. O workflow envia o código da aplicação, mas não reinstala automaticamente scripts de deploy, unidade systemd ou configuração do Caddy. Mudanças nesses componentes exigem aplicação controlada e restrita ao SelfMoney.

@@ -1,0 +1,16 @@
+[Unit]
+Description=Retain active and two previous application releases
+After=local-fs.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/python3 /usr/local/lib/vps-release-retention.py --apply
+Nice=15
+IOSchedulingClass=idle
+CPUQuota=25%
+MemoryMax=128M
+ProtectSystem=strict
+ProtectHome=read-only
+ReadWritePaths=/srv/financialapp/releases /srv/financialapp/incoming /srv/lucflix/releases /var/www/zaralho-releases /run/lock
+PrivateTmp=true
+NoNewPrivileges=true

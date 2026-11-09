@@ -1,0 +1,11 @@
+[Unit]
+Description=Record per-project memory and CPU once a minute
+
+[Timer]
+OnBootSec=2m
+OnUnitActiveSec=1m
+AccuracySec=5s
+Unit=vps-resource-sample.service
+
+[Install]
+WantedBy=timers.target

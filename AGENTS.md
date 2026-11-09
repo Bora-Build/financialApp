@@ -1,5 +1,11 @@
 # Regras de implantação na VPS
 
+## Exceção autorizada pelo proprietário em 09/11/2026
+
+Após a revisão de recursos de todos os sistemas, o proprietário aprovou ajustar de forma controlada o processamento de mídia do LucFlix e a retenção específica de releases. Essa autorização permite alterações reversíveis de recursos/concorrência e remoção somente de releases antigas comprovadamente inativas, preservando a atual e duas anteriores, todos os dados e backups. Verificar links, processos e dependências antes de qualquer remoção. Não autoriza apagar mídia, dados de usuários ou backups, nem mudanças funcionais ou operações globais de PM2/Docker. As demais proibições abaixo continuam válidas.
+
+Etapa executada: worker LucFlix com CPUQuota=200%, MemoryHigh=2G e MemoryMax=4500M preservado, sem restart. O override próprio `zz-vps-resource-balance.conf` precisa ordenar depois do `resources.conf` existente; validar valores efetivos após daemon-reload. Retenção diária e coleta leve por componente têm units próprias, descritas em `deploy/vps/README.md`. Manter dados e backups fora da limpeza. Antes de manipular links/releases dos outros projetos, suspender/aguardar a retenção ou integrar o mesmo lock; não presumir que todos os deploys compartilhem o lock do FinancialApp.
+
 Instrução expressa do proprietário: é proibido modificar qualquer coisa relacionada aos projetos Zaralho e LucFlix existentes na VPS 103.204.193.6. Essa proibição inclui arquivos, dados, usuários, permissões, processos, serviços, configurações e automações desses projetos.
 
 Inspeções desses projetos devem ser somente de leitura. Não reiniciar serviços existentes, não executar comandos globais de PM2/Docker e não alterar configurações globais para implantar o FinancialApp.
