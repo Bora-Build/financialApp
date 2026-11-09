@@ -61,7 +61,10 @@ export default function App() {
   }, [theme])
 
   return (
-    <BrowserRouter basename={ROUTER_BASENAME}>
+    <BrowserRouter
+      basename={ROUTER_BASENAME}
+      future={{ v7_relativeSplatPath: true, v7_startTransition: true }}
+    >
       <ToastContainer />
       <Routes>
         <Route path="/login" element={<LoginScreen />} />

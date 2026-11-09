@@ -11,7 +11,7 @@ import { AlertModal, type AlertTone } from '../../components/ui/AlertModal'
 import { Input } from '../../components/ui/Input'
 import { Button } from '../../components/ui/Button'
 import { getFirstFormErrorMessage } from './formError'
-import { BrandWordmark } from '../../components/brand/Brand'
+import { BrandLockup } from '../../components/brand/Brand'
 import { buildApiUrl } from '../../lib/apiBase'
 
 const schema = z.object({
@@ -21,6 +21,14 @@ const schema = z.object({
 
 type FormData = z.infer<typeof schema>
 type AlertState = { title: string; message: string; tone?: AlertTone } | null
+const heroHighlights = ['Saldo organizado', 'Metas acompanhadas', 'Gastos sob controle']
+
+function isPwaStandalone() {
+  return (
+    window.matchMedia('(display-mode: standalone)').matches ||
+    Boolean((window.navigator as Navigator & { standalone?: boolean }).standalone)
+  )
+}
 
 export default function LoginScreen() {
   const navigate = useNavigate()
@@ -29,6 +37,7 @@ export default function LoginScreen() {
   const [alert, setAlert] = useState<AlertState>(null)
   const [passkeyAvailable, setPasskeyAvailable] = useState(false)
   const [passkeyLoading, setPasskeyLoading] = useState(false)
+  const [isStandalonePwa, setIsStandalonePwa] = useState(false)
 
   const googleLoginUrl = buildApiUrl('/api/auth/google/start')
   const heroImageSrc = buildApiUrl('/api/media/login-01')
@@ -44,6 +53,16 @@ export default function LoginScreen() {
 
   useEffect(() => {
     isPasskeyAvailable().then(setPasskeyAvailable)
+  }, [])
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia('(display-mode: standalone)')
+    const updateStandaloneState = () => setIsStandalonePwa(isPwaStandalone())
+
+    updateStandaloneState()
+    mediaQuery.addEventListener('change', updateStandaloneState)
+
+    return () => mediaQuery.removeEventListener('change', updateStandaloneState)
   }, [])
 
   const finishLogin = (user: any) => {
@@ -108,15 +127,15 @@ export default function LoginScreen() {
         {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
       </button>
 
-      <main className="mx-auto w-full max-w-6xl overflow-hidden bg-white transition-colors dark:bg-slate-950 lg:grid lg:min-h-[720px] lg:grid-cols-[1.04fr_0.96fr] lg:rounded-[30px] lg:border lg:border-slate-200 lg:shadow-[0_30px_80px_-36px_rgba(76,29,149,0.38)] dark:lg:border-slate-800 dark:lg:shadow-[0_34px_90px_-42px_rgba(0,0,0,0.78)]">
-        <section className="relative hidden lg:block">
+      <main className="auth-shell-enter mx-auto w-full max-w-6xl overflow-hidden bg-white transition-colors dark:bg-slate-950 lg:grid lg:min-h-[720px] lg:grid-cols-[1.04fr_0.96fr] lg:rounded-[28px] lg:border lg:border-slate-200/80 lg:shadow-[0_30px_90px_-44px_rgba(76,29,149,0.42)] dark:lg:border-slate-800/90 dark:lg:shadow-[0_34px_90px_-42px_rgba(0,0,0,0.84)]">
+        <section className="relative hidden bg-violet-950 lg:block">
           <img
             src={heroImageSrc}
             alt="Pessoa organizando controle financeiro"
             className="absolute inset-0 h-full w-full object-cover dark:brightness-90 dark:saturate-110"
-            loading="lazy"
+            loading="eager"
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-[#2a1152]/80 via-[#4b1d95]/32 to-transparent dark:from-slate-950/82 dark:via-violet-950/42 dark:to-slate-950/10" />
+          <div className="absolute inset-0 bg-gradient-to-t from-[#210f3f]/90 via-[#3f1a78]/50 to-slate-900/20 dark:from-slate-950/90 dark:via-violet-950/50 dark:to-slate-950/20" />
 
           <div className="absolute left-8 top-8 inline-flex items-center gap-2 rounded-full border border-white/35 bg-white/15 px-3 py-1 text-xs font-semibold text-white backdrop-blur-sm">
             <ShieldCheck size={14} />
@@ -124,17 +143,27 @@ export default function LoginScreen() {
           </div>
 
           <div className="absolute inset-x-8 bottom-10">
-            <h1 className="max-w-md text-4xl font-semibold leading-tight text-white">
-              Entre e acompanhe suas finanças com clareza.
+            <div className="mb-4 flex flex-wrap gap-2">
+              {heroHighlights.map((item) => (
+                <span
+                  key={item}
+                  className="rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-semibold text-white/90 backdrop-blur-sm"
+                >
+                  {item}
+                </span>
+              ))}
+            </div>
+            <h1 className="max-w-lg text-4xl font-semibold leading-tight text-white">
+              Controle sua vida financeira com clareza.
             </h1>
-            <p className="mt-3 max-w-sm text-sm text-white/85">
-              Acesso rápido, seguro e sem complicação.
+            <p className="mt-3 max-w-md text-sm leading-6 text-white/90">
+              Organize contas, gastos e metas em uma experiência simples e segura.
             </p>
           </div>
         </section>
 
-        <section className="relative flex min-h-screen items-start justify-center bg-white p-4 pt-5 transition-colors dark:bg-gradient-to-br dark:from-slate-950 dark:via-slate-950 dark:to-[#14172a] sm:min-h-0 sm:items-center sm:p-7 lg:p-12">
-          <div className="w-full max-w-md">
+        <section className="relative flex min-h-screen items-start justify-center bg-white p-4 pt-5 transition-colors dark:bg-gradient-to-br dark:from-slate-950 dark:via-[#090f1f] dark:to-[#151329] sm:min-h-0 sm:items-center sm:p-7 lg:p-12">
+          <div className="auth-panel-enter w-full max-w-[26.5rem]">
             <div className="relative mb-6 overflow-hidden rounded-[24px] border border-violet-200/70 bg-violet-900 shadow-[0_20px_45px_-30px_rgba(76,29,149,0.55)] dark:border-violet-400/20 dark:bg-slate-900 lg:hidden">
               <img
                 src={heroImageSrc}
@@ -148,24 +177,26 @@ export default function LoginScreen() {
                   <ShieldCheck size={13} />
                   Acesso seguro
                 </div>
-                <h3 className="max-w-[17rem] text-[1.8rem] font-semibold leading-[1.12] text-white">
-                  Gestão elegante para sua rotina financeira.
+                <h3 className="max-w-[18rem] text-[1.8rem] font-semibold leading-[1.12] text-white">
+                  Controle sua vida financeira com clareza.
                 </h3>
-                <p className="mt-2 max-w-[18rem] text-[16px] text-white/85">
-                  Um login rápido, limpo e com foco no que importa.
+                <p className="mt-2 max-w-[19rem] text-[16px] text-white/85">
+                  Organize contas, gastos e metas com segurança.
                 </p>
               </div>
             </div>
 
-            <div className="mb-6 text-center lg:mb-8">
-              <BrandWordmark size="sm" className="justify-center" />
-              <h2 className="mt-3 text-[2rem] font-semibold leading-tight tracking-tight text-slate-900 dark:text-white sm:text-[2.15rem] lg:text-3xl">
+            <div className="mb-6 text-center lg:mb-7">
+              <BrandLockup iconSize="sm" wordmarkSize="sm" className="justify-center" />
+              <h2 className="mt-4 text-[1.85rem] font-semibold leading-tight tracking-tight text-slate-900 dark:text-white sm:text-[1.95rem] lg:text-[2rem]">
                 Acesse sua conta
               </h2>
-              <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">Entre com Google ou use seu e-mail e senha.</p>
+              <p className="mx-auto mt-2 max-w-sm text-sm leading-6 text-slate-600 dark:text-slate-300">
+                Entre com segurança para continuar cuidando da sua vida financeira.
+              </p>
             </div>
 
-            <div className="rounded-2xl border border-slate-200/85 bg-white/95 p-4 shadow-[0_18px_55px_-40px_rgba(76,29,149,0.45)] backdrop-blur-sm transition-colors dark:border-slate-700/80 dark:bg-slate-900/72 dark:shadow-[0_18px_55px_-34px_rgba(0,0,0,0.8)] sm:p-5 lg:rounded-none lg:border-0 lg:bg-transparent lg:p-0 lg:shadow-none lg:dark:bg-transparent">
+            <div className="rounded-2xl border border-slate-200/85 bg-white/95 p-4 shadow-[0_18px_55px_-42px_rgba(76,29,149,0.45)] backdrop-blur-sm transition-colors dark:border-slate-700/75 dark:bg-slate-900/78 dark:shadow-[0_18px_55px_-34px_rgba(0,0,0,0.86)] sm:p-5 lg:rounded-none lg:border-0 lg:bg-transparent lg:p-0 lg:shadow-none lg:dark:bg-transparent">
               <form onSubmit={handleSubmit(onSubmit, onInvalid)} className="space-y-4">
                 <Input
                   label="E-mail"
@@ -173,7 +204,7 @@ export default function LoginScreen() {
                   placeholder="seuemail@exemplo.com"
                   leftIcon={<Mail size={16} />}
                   autoComplete="email"
-                  className="h-12 rounded-xl border-slate-300 bg-slate-50 text-[16px] focus:ring-violet-600 dark:border-slate-600 dark:bg-slate-950/80 dark:text-slate-100 dark:placeholder:text-slate-500 dark:focus:border-violet-400 dark:focus:ring-violet-500/35"
+                  className="h-11 rounded-xl border-slate-300 bg-slate-50 text-[16px] focus:ring-violet-600 dark:border-slate-600 dark:bg-slate-950/80 dark:text-slate-100 dark:placeholder:text-slate-500 dark:focus:border-violet-400 dark:focus:ring-violet-500/35"
                   {...register('email')}
                 />
 
@@ -183,7 +214,7 @@ export default function LoginScreen() {
                   placeholder="Digite sua senha"
                   leftIcon={<Lock size={16} />}
                   autoComplete="current-password"
-                  className="h-12 rounded-xl border-slate-300 bg-slate-50 text-[16px] focus:ring-violet-600 dark:border-slate-600 dark:bg-slate-950/80 dark:text-slate-100 dark:placeholder:text-slate-500 dark:focus:border-violet-400 dark:focus:ring-violet-500/35"
+                  className="h-11 rounded-xl border-slate-300 bg-slate-50 text-[16px] focus:ring-violet-600 dark:border-slate-600 dark:bg-slate-950/80 dark:text-slate-100 dark:placeholder:text-slate-500 dark:focus:border-violet-400 dark:focus:ring-violet-500/35"
                   {...register('password')}
                 />
 
@@ -199,13 +230,29 @@ export default function LoginScreen() {
                   loading={isSubmitting}
                   size="lg"
                   leftIcon={!isSubmitting ? <ArrowRight size={16} /> : undefined}
-                  className="h-12 rounded-xl bg-gradient-to-r from-violet-700 to-purple-600 text-white shadow-[0_14px_30px_-20px_rgba(109,40,217,0.85)] hover:brightness-110 dark:from-violet-600 dark:to-fuchsia-600 dark:shadow-[0_16px_34px_-22px_rgba(168,85,247,0.95)]"
+                  className="h-12 rounded-xl bg-gradient-to-r from-violet-700 to-purple-600 text-white shadow-[0_16px_34px_-20px_rgba(109,40,217,0.88)] hover:-translate-y-0.5 hover:brightness-110 active:translate-y-0 dark:from-violet-600 dark:to-fuchsia-600 dark:shadow-[0_16px_34px_-22px_rgba(168,85,247,0.95)]"
                 >
                   Entrar
                 </Button>
               </form>
 
-              {passkeyAvailable && (
+              <div className="mt-6 mb-4 flex items-center gap-3">
+                <div className="h-px flex-1 bg-slate-200 dark:bg-slate-700" />
+                <span className="text-xs font-semibold uppercase text-slate-400 dark:text-slate-500">Outras formas</span>
+                <div className="h-px flex-1 bg-slate-200 dark:bg-slate-700" />
+              </div>
+
+              <a
+                href={googleLoginUrl}
+                className="group inline-flex h-11 w-full items-center justify-center gap-3 rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-800 shadow-[0_10px_28px_-26px_rgba(15,23,42,0.75)] transition hover:-translate-y-0.5 hover:border-violet-200 hover:bg-violet-50 active:translate-y-0 dark:border-slate-700 dark:bg-slate-950/70 dark:text-slate-100 dark:hover:border-violet-400/70 dark:hover:bg-slate-900"
+              >
+                <span className="inline-flex h-7 w-7 items-center justify-center rounded-full border border-slate-200 bg-white text-sm font-bold text-violet-700 shadow-sm dark:border-violet-400/30 dark:bg-violet-500/15 dark:text-violet-200">
+                  G
+                </span>
+                Continuar com o Google
+              </a>
+
+              {passkeyAvailable && isStandalonePwa && (
                 <Button
                   type="button"
                   fullWidth
@@ -215,29 +262,18 @@ export default function LoginScreen() {
                   disabled={isSubmitting}
                   leftIcon={!passkeyLoading ? <Fingerprint size={17} /> : undefined}
                   onClick={handlePasskeyLogin}
-                  className="mt-3 h-12 rounded-xl border-violet-200 bg-white text-violet-700 hover:bg-violet-50 dark:border-violet-400/45 dark:bg-violet-500/10 dark:text-violet-200 dark:hover:bg-violet-500/16"
+                  className="mt-3 h-11 rounded-xl border-slate-200 bg-white text-violet-700 hover:border-violet-200 hover:bg-violet-50 active:translate-y-0 dark:border-slate-700 dark:bg-slate-950/70 dark:text-violet-200 dark:hover:border-violet-400/70 dark:hover:bg-slate-900 lg:hidden"
                 >
                   Entrar com Face ID / Passkey
                 </Button>
               )}
 
-              <div className="mt-6 mb-5 flex items-center gap-3">
-                <div className="h-px flex-1 bg-slate-200 dark:bg-slate-700" />
-                <span className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400 dark:text-slate-500">ou</span>
-                <div className="h-px flex-1 bg-slate-200 dark:bg-slate-700" />
+              <div className="mt-4 flex items-center justify-center gap-2 text-xs font-medium text-slate-500 dark:text-slate-400">
+                <ShieldCheck size={14} className="text-violet-600 dark:text-violet-300" />
+                <span>Ambiente protegido por autenticação segura.</span>
               </div>
 
-              <a
-                href={googleLoginUrl}
-                className="group mb-5 inline-flex w-full items-center justify-center gap-3 rounded-xl border border-violet-200 bg-violet-50 px-4 py-3 text-sm font-semibold text-slate-800 transition hover:-translate-y-0.5 hover:border-violet-300 hover:bg-white dark:border-slate-600 dark:bg-slate-950/70 dark:text-slate-100 dark:hover:border-violet-400/70 dark:hover:bg-slate-900"
-              >
-                <span className="inline-flex h-7 w-7 items-center justify-center rounded-full border border-violet-200 bg-white text-sm font-bold text-violet-700 dark:border-violet-400/30 dark:bg-violet-500/15 dark:text-violet-200">
-                  G
-                </span>
-                Continuar com o Google
-              </a>
-
-              <p className="mt-6 text-center text-sm text-slate-600 dark:text-slate-400">
+              <p className="mt-5 text-center text-sm text-slate-600 dark:text-slate-400">
                 Não tem conta?{' '}
                 <Link to="/register" className="font-semibold text-violet-700 hover:underline dark:text-violet-300 dark:hover:text-violet-200">
                   Criar conta

@@ -14,6 +14,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
     const [showPassword, setShowPassword] = useState(false)
     const isPassword = type === 'password'
     const resolvedType = isPassword ? (showPassword ? 'text' : 'password') : type
+    const passwordToggleLabel = showPassword ? 'Ocultar senha' : 'Mostrar senha'
 
     return (
       <div className="flex flex-col gap-1.5">
@@ -45,8 +46,14 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
             <button
               type="button"
               onClick={() => setShowPassword(v => !v)}
-              className="absolute right-3 text-gray-400 hover:text-gray-600 focus:outline-none dark:text-slate-500 dark:hover:text-slate-300"
-              tabIndex={-1}
+              className={cn(
+                'absolute right-2 inline-flex h-8 w-8 items-center justify-center rounded-full text-gray-400 transition',
+                'hover:bg-slate-100 hover:text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 focus-visible:ring-offset-2',
+                'dark:text-slate-500 dark:hover:bg-slate-800 dark:hover:text-slate-200 dark:focus-visible:ring-violet-300 dark:focus-visible:ring-offset-slate-950'
+              )}
+              aria-label={passwordToggleLabel}
+              aria-pressed={showPassword}
+              title={passwordToggleLabel}
             >
               {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
             </button>

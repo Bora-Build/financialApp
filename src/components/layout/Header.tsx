@@ -1,4 +1,4 @@
-import { ChevronLeft, ChevronRight, Bell, Moon, PanelLeftClose, PanelLeftOpen, Sun } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Bell, Moon, Sun } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { useAppStore } from '../../stores/appStore'
 import { useAuthStore } from '../../stores/authStore'
@@ -6,7 +6,7 @@ import { formatMonth } from '../../utils/formatters'
 import { BrandWordmark } from '../brand/Brand'
 
 export function Header() {
-  const { selectedMonth, setSelectedMonth, sidebarCollapsed, theme, toggleSidebar, toggleTheme } = useAppStore()
+  const { selectedMonth, setSelectedMonth, theme, toggleTheme } = useAppStore()
   const { user } = useAuthStore()
 
   const prevMonth = () => {
@@ -24,14 +24,6 @@ export function Header() {
   return (
     <header className="safe-top sticky top-0 z-30 flex h-14 flex-shrink-0 items-center justify-between border-b border-gray-100 bg-white px-3 transition-colors dark:border-slate-800 dark:bg-slate-950 sm:px-4">
       <div className="flex min-w-0 flex-1 items-center gap-2 lg:flex-none lg:min-w-[92px]">
-        <button
-          onClick={toggleSidebar}
-          className="hidden h-8 w-8 items-center justify-center rounded-full text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-100 lg:inline-flex"
-          aria-label={sidebarCollapsed ? 'Expandir menu lateral' : 'Recolher menu lateral'}
-          title={sidebarCollapsed ? 'Expandir menu lateral' : 'Recolher menu lateral'}
-        >
-          {sidebarCollapsed ? <PanelLeftOpen size={16} /> : <PanelLeftClose size={16} />}
-        </button>
         <div className="lg:hidden">
           <BrandWordmark size="sm" />
         </div>
