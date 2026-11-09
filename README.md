@@ -78,12 +78,9 @@ npm run pm2:kinghost:logs
 
 ## CI/CD (GitHub Actions)
 
-O workflow `.github/workflows/deploy.yml` faz:
-1. `npm ci`
-2. `npm run build:kinghost`
-3. Commit automatico de `public/` na `main`
+O workflow `.github/workflows/deploy.yml` agora publica o SelfMoney na VPS a cada push em `main`, com build, lint, SSH exclusivo, verificacao de saude e rollback de codigo. Ele substitui a antiga geracao de commits de build para KingHost.
 
-Assim, a automacao Git->FTP da KingHost sempre recebe artefato pronto de execucao.
+Configuracao, secrets, DNS e operacao estao em [deploy/README.md](deploy/README.md).
 
 ## APK Android (Capacitor)
 

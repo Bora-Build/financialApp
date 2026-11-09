@@ -56,3 +56,6 @@ backend/node_modules
 # Deploy artifacts
 deploy-manual-kinghost-*/
 deploy-manual-kinghost-*.zip
+
+# Private deployment credentials and local staging
+.deploy-private/

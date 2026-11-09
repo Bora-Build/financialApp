@@ -1,77 +1,66 @@
-name: Build and Deploy to KingHost
+name: Deploy SelfMoney to VPS
 
 on:
   push:
-    branches:
-      - main
-    paths-ignore:
-      - 'public/**'
+    branches: [main]
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 concurrency:
-  group: kinghost-deploy-${{ github.ref }}
+  group: financialapp-production
   cancel-in-progress: false
 
-permissions:
-  contents: write
-
 jobs:
-  build-and-deploy:
+  deploy:
     runs-on: ubuntu-latest
-
+    timeout-minutes: 20
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
-          node-version: '22'
-          cache: 'npm'
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Build project
+          node-version: '24'
+          cache: npm
+      - name: Install and validate
+        run: |
+          npm ci
+          npm run lint
+      - name: Build for the subdomain
         env:
-          VITE_APP_BASE_PATH: /financialApp/
-        run: npm run build:kinghost
-
-      - name: Commit built files to main
+          VITE_APP_BASE_PATH: /
+          VITE_API_URL: ''
         run: |
-          set -e
-          git config user.email "actions@github.com"
-          git config user.name "GitHub Actions"
-
-          # Evita push rejeitado quando outro job/commit avancou a branch.
-          git checkout -B main
-          git pull --rebase --autostash origin main
-
-          git add public/
-          if git diff --staged --quiet; then
-            echo "Nenhuma alteracao de build para commit."
-            exit 0
-          fi
-
-          git commit -m "chore: update built files [skip ci]"
-
-          for attempt in 1 2 3; do
-            if git pull --rebase --autostash origin main && git push origin main; then
-              echo "Push concluido na tentativa $attempt."
-              exit 0
-            fi
-            echo "Tentativa $attempt falhou. Repetindo em 5s..."
-            sleep 5
-          done
-
-          echo "Falha ao fazer push apos 3 tentativas."
-          exit 1
-
-      - name: Deployment Summary
+          npm run build
+          mkdir -p release/public
+          cp -a dist/. release/public/
+          cp FinancialApp.js package.json package-lock.json release/
+          cp -a backend release/backend
+          rm -rf release/backend/node_modules
+          tar -czf "$GITHUB_SHA.tar.gz" -C release .
+      - name: Configure exclusive deployment SSH key
+        env:
+          SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
+          KNOWN_HOSTS: ${{ secrets.VPS_KNOWN_HOSTS }}
+        run: |
+          test -n "$SSH_KEY"
+          test -n "$KNOWN_HOSTS"
+          install -d -m 700 ~/.ssh
+          printf '%s\n' "$SSH_KEY" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          printf '%s\n' "$KNOWN_HOSTS" > ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/known_hosts
+      - name: Upload and deploy only FinancialApp
+        env:
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_PORT: ${{ secrets.VPS_PORT }}
+          VPS_USER: ${{ secrets.VPS_USER }}
+        run: |
+          [[ "$VPS_HOST" =~ ^[a-zA-Z0-9.-]+$ ]]
+          [[ "$VPS_PORT" =~ ^[0-9]+$ ]]
+          [[ "$VPS_USER" == financialapp-deploy ]]
+          scp -o BatchMode=yes -o StrictHostKeyChecking=yes -P "$VPS_PORT" "$GITHUB_SHA.tar.gz" "$VPS_USER@$VPS_HOST:/srv/financialapp/incoming/$GITHUB_SHA.tar.gz"
+          ssh -o BatchMode=yes -o StrictHostKeyChecking=yes -p "$VPS_PORT" "$VPS_USER@$VPS_HOST" "/srv/financialapp/bin/release $GITHUB_SHA"
+      - name: Remove runner SSH credentials
         if: always()
-        run: |
-          echo "## Deploy Summary" >> $GITHUB_STEP_SUMMARY
-          echo "- **Status**: ${{ job.status }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Branch**: main" >> $GITHUB_STEP_SUMMARY
-          echo "- **Commit**: ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Hora**: $(date)" >> $GITHUB_STEP_SUMMARY
+        run: rm -f ~/.ssh/id_ed25519
