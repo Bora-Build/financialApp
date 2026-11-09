@@ -1,65 +1,178 @@
-# SelfMoney na VPS
+# SelfMoney: deploy e operação na VPS
 
-Endereco planejado: https://selfmoney.lafdev.com.br
+Produção: **https://selfmoney.lafdev.com.br**. Revisado em **09/11/2026** após um deploy real aprovado pelo GitHub Actions.
 
-## Isolamento
+[Visão geral](../README.md) · [Índice](../docs/INDICE_DOCUMENTACAO.md) · [Diagnóstico](../docs/TROUBLESHOOTING.md)
 
-- Raiz exclusiva: `/srv/financialapp`.
-- Execucao: usuario `financialapp`, servico `financialapp.service`, porta local `21149`.
-- Deploy: usuario `financialapp-deploy`, chave SSH exclusiva e sudo limitado a reiniciar/parar somente esse servico.
-- MySQL 8.4 exclusivo: container `financialapp-mysql`, porta local `3310`, banco e usuario `financialapp`.
-- Dados persistentes: `/srv/financialapp/shared/mysql`.
-- Segredos: `/etc/financialapp/app.env` e `/etc/financialapp/mysql.env`, somente root pode ler.
-- Limites: aplicacao 512 MiB/1 CPU; banco 768 MiB/0,75 CPU.
-- Zaralho, LucFlix e monitoramento nao fazem parte deste deploy.
+## Isolamento obrigatório
 
-## DNS e acesso publico
+Zaralho, LucFlix e monitoramento não fazem parte deste projeto. É expressamente proibido alterar seus arquivos, usuários, dados, permissões, processos, serviços ou automações. Nunca use comandos globais como reiniciar Docker, reiniciar todos os processos PM2 ou derrubar stacks de outros projetos.
 
-Criar registro DNS `A`, nome `selfmoney`, valor `103.204.193.6`. Nao criar AAAA sem IPv6 funcional. As portas publicas 80 e 443 precisam chegar ao Caddy desta VPS para HTTPS automatico; verificar o encaminhamento no painel da hospedagem, pois a interface da VPS usa endereco privado.
+O proprietário autorizou a inclusão do bloco exclusivo do SelfMoney no Caddy, sua validação e reload, e a liberação de `443/tcp` no UFW. As rotas existentes foram preservadas e os PIDs dos projetos protegidos permaneceram iguais durante a validação. Novas mudanças em infraestrutura compartilhada exigem avaliação das regras em [AGENTS.md](../AGENTS.md).
 
-O bloco exclusivo em `selfmoney.caddy` e importado pelo Caddy sem modificar as rotas dos outros projetos. O reload do Caddy foi autorizado expressamente pelo proprietario. A Boa Host termina o HTTPS publico e encaminha HTTP para a VPS: o bloco interno deve usar `http://selfmoney.lafdev.com.br`, evitando um ciclo de redirecionamento HTTPS. O certificado publico e gerenciado nessa camada externa.
+## Inventário
 
-A regra `443/tcp` foi liberada no UFW com autorizacao expressa. Nenhuma regra existente foi removida ou substituida.
+| Item | Configuração |
+| --- | --- |
+| SSH público | `103.204.193.6:28369` |
+| Usuário de deploy | `financialapp-deploy` |
+| Usuário de execução | `financialapp` |
+| Serviço da aplicação | `financialapp.service` |
+| Raiz exclusiva | `/srv/financialapp` |
+| Porta da aplicação | `127.0.0.1:21149` |
+| MySQL | Container exclusivo `financialapp-mysql`, imagem `mysql:8.4` |
+| Banco / usuário do banco | `financialapp` / `financialapp` |
+| Porta MySQL | `127.0.0.1:3310` |
+| Persistência MySQL | `/srv/financialapp/shared/mysql` |
+| Configuração da aplicação | `/etc/financialapp/app.env` |
+| Configuração inicial MySQL | `/etc/financialapp/mysql.env` |
+| Script instalado de deploy | `/srv/financialapp/bin/release` |
+| Unidade systemd | `/etc/systemd/system/financialapp.service` |
+| Bloco Caddy exclusivo | `/etc/caddy/selfmoney.caddy` |
+| Limites da aplicação | 512 MiB e até 1 CPU |
+| Limites do MySQL | 768 MiB e até 0,75 CPU |
+
+Os arquivos `.env` da VPS são restritos a root. O usuário de deploy não precisa lê-los: o systemd injeta o ambiente ao iniciar a aplicação. A chave de deploy permite sudo somente para reiniciar/parar `financialapp.service`.
+
+## DNS, TLS e proxy
+
+Registro configurado na zona `lafdev.com.br`:
+
+| Tipo | Nome | Valor |
+| --- | --- | --- |
+| A | `selfmoney` | `103.204.193.6` |
+
+A Boa Host termina o HTTPS público e encaminha HTTP com o Host do domínio para a VPS. O certificado público é gerenciado nessa camada externa. A regra 443/tcp foi liberada no UFW, mas isso não substitui o encaminhamento/cadastro do domínio no painel da hospedagem.
+
+O bloco atual é:
+
+```caddyfile
+# Boa Host terminates public HTTPS and forwards HTTP to this VPS.
+http://selfmoney.lafdev.com.br {
+    reverse_proxy 127.0.0.1:21149
+}
+```
+
+O `Caddyfile` compartilhado importa `/etc/caddy/selfmoney.caddy`. Não volte a usar o domínio sem `http://` nesse bloco: o redirecionamento HTTPS automático interno gerou um ciclo e foi corrigido. A aplicação mantém `APP_URL=https://selfmoney.lafdev.com.br` e `APP_BASE_PATH=/`.
 
 ## Secrets do GitHub Actions
 
-Em Settings > Secrets and variables > Actions > New repository secret:
+Os cinco repository secrets já foram cadastrados e validados. Para recriar ou revisar, abra [Settings → Secrets and variables → Actions](https://github.com/lucasandrefernando/financialApp/settings/secrets/actions) e use **New repository secret**:
 
-| Nome | Valor |
+| Nome exato | Valor |
 | --- | --- |
 | `VPS_HOST` | `103.204.193.6` |
 | `VPS_PORT` | `28369` |
 | `VPS_USER` | `financialapp-deploy` |
-| `VPS_SSH_KEY` | Chave privada exclusiva, fornecida localmente fora do Git |
-| `VPS_KNOWN_HOSTS` | Linha completa da chave publica ED25519 do servidor, fornecida localmente |
+| `VPS_SSH_KEY` | Conteúdo completo da chave privada exclusiva, incluindo BEGIN/END |
+| `VPS_KNOWN_HOSTS` | Linha da chave ED25519 do servidor, mostrada abaixo |
 
-Nenhuma senha de root ou do banco precisa ser cadastrada no GitHub.
+Identidade pública registrada na implantação:
 
-## Fluxo de atualizacao
+```text
+[103.204.193.6]:28369 ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAILDC1dHA0dQ83MW0XXEOj8T58azJmIzQKE8NSkL5cuO5
+```
 
-Cada push em `main` instala dependencias, roda lint, compila para `/`, empacota frontend e backend e envia por SSH com verificacao da chave do servidor. O workflow nao cria commits de build nem envia `.env`.
+Confirme a identidade por um canal confiável se houver reinstalação ou troca de chave da VPS; não aceite uma nova chave automaticamente. A chave pública acima não é segredo. A chave privada fica fora do Git, no computador de configuração, em `.deploy-private/financialapp_deploy`; `VPS_KNOWN_HOSTS` também foi fornecido em `.deploy-private/VPS_KNOWN_HOSTS.txt`. Esses caminhos locais não existem automaticamente em outros clones.
 
-`release.sh` serializa deploys com flock, instala dependencias de producao sem scripts de instalacao, troca o link `releases/current` e reinicia somente `financialapp.service`. Confere a pagina e `/health/db`; se houver falha, restaura a release anterior e reinicia somente o FinancialApp. Sem versao anterior, para somente esse servico. O rollback cobre codigo, nao o banco. O schema inicial nunca e executado no deploy automatico.
+Copie o conteúdo dos arquivos, sem aspas adicionais. Não use senha de root nem credenciais do banco como secrets de deploy. O GitHub não permite reler o valor de secrets existentes; valide por uma execução ou substitua o valor conhecido.
 
-Para testar depois de cadastrar os secrets: Actions > Deploy SelfMoney to VPS > Run workflow. Releases antigas sao preservadas; acompanhar espaco em disco antes de remover releases ou backups do proprio FinancialApp.
+## Fluxo automático
 
-## Operacao (root)
+Arquivo versionado: [deploy.yml](../.github/workflows/deploy.yml). Cada push em `main`, inclusive mudanças de documentação, aciona:
+
+1. Checkout e Node.js 24.
+2. `npm ci` e `npm run lint`.
+3. `npm run build`, que inclui TypeScript, com `VITE_APP_BASE_PATH=/` e API na mesma origem.
+4. Pacote de `FinancialApp.js`, dependências declaradas, backend e frontend compilado em `public/`.
+5. SSH com chave exclusiva e verificação estrita da identidade do servidor.
+6. Envio do pacote para `/srv/financialapp/incoming/<sha>.tar.gz`.
+7. Execução de `/srv/financialapp/bin/release <sha>`.
+
+O script usa `flock`, cria uma pasta de release com SHA e sufixo único, instala dependências de produção com `--ignore-scripts`, troca atomicamente o link `releases/current` e reinicia somente `financialapp.service`. Testa a página e `/health/db` até 30 vezes, com pausa de dois segundos e timeout de três segundos por requisição. O tempo total pode exceder um minuto se houver timeouts.
+
+Se a validação falhar após a troca, o script tenta restaurar a release anterior e reinicia somente o FinancialApp. Sem versão anterior, para apenas esse serviço. Falhas anteriores à troca deixam a release ativa intacta. O rollback é de código; não desfaz mudanças no banco.
+
+O workflow não cria commits de build, não envia `.env`, não recria o banco e não reaplica o schema inicial. Os modelos em `deploy/` não são instalados novamente pelo workflow: atualizar `release.sh`, systemd ou Caddy exige uma operação separada e controlada no SelfMoney.
+
+## Executar e conferir um deploy
+
+Em [Actions](https://github.com/lucasandrefernando/financialApp/actions), selecione **Deploy SelfMoney to VPS → Run workflow → main → Run workflow**. Para repetir uma execução, use **Re-run all jobs**. O script permite uma nova release para o mesmo SHA.
+
+[Execução de referência aprovada](https://github.com/lucasandrefernando/financialApp/actions/runs/42618478590), commit `86986834877aa8b69d0be046fbe56811e159a3ac`. Depois dela foram conferidos HTTPS 200, banco conectado e processos protegidos sem mudança.
+
+Verificação pública:
+
+```sh
+curl --fail https://selfmoney.lafdev.com.br/health/db
+curl -IL --max-redirs 5 https://selfmoney.lafdev.com.br/
+```
+
+`/health/db` deve informar `ok: true` e `db: up`. Isso não comprova login, e-mail, Google OAuth ou IA.
+
+## SSH e observação
+
+Com a chave exclusiva em um local protegido:
+
+```sh
+ssh -i /caminho/da/chave -p 28369 financialapp-deploy@103.204.193.6
+```
+
+Verifique a identidade do servidor antes de confiar no primeiro acesso. Na VPS:
 
 ```sh
 systemctl status financialapp.service --no-pager
-journalctl -u financialapp.service -n 80 --no-pager
+readlink -f /srv/financialapp/releases/current
+cat /srv/financialapp/releases/deployed-commit
 curl --fail http://127.0.0.1:21149/health/db
-docker logs --tail 80 financialapp-mysql
 ```
 
-O banco foi criado vazio, com tabelas e categorias iniciais; nenhum dado de outro ambiente foi migrado. Fazer backup do banco antes de futuras migracoes. `database/schema.sql` contem DROP TABLE e so pode ser usado em um banco novo, vazio e exclusivo.
+Como root, para diagnóstico ou intervenção específica autorizada:
 
-## Configuracoes pendentes
+```sh
+journalctl -u financialapp.service -n 80 --no-pager
+docker logs --tail 80 financialapp-mysql
+systemctl restart financialapp.service
+```
 
-O proprietario escolheu adiar e-mail. Sem `SMTP_USER`/`SMTP_PASS` (Gmail e senha de aplicativo), confirmacao de cadastro e recuperacao de senha nao funcionam. Configurar tambem `MAIL_FROM` em `/etc/financialapp/app.env` quando disponivel e reiniciar somente `financialapp.service`.
+Não publique logs contendo tokens, dados pessoais ou credenciais. Não imprima os arquivos de ambiente em chamados ou no Actions.
 
-Google OAuth (`GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`) e IA (`GROQ_API_KEY`) tambem exigem credenciais proprias, caso sejam usados. Nunca reutilizar credenciais dos outros projetos. Para Google OAuth, cadastrar o callback exibido pelo backend, de acordo com o dominio definitivo.
+## Banco, backup e recuperação
 
-## Bootstrap
+Foi criado um banco novo, com 12 tabelas iniciais e categorias, sem migrar dados antigos. Rotas de autenticação podem criar tabelas e ajustar colunas adicionais em tempo de execução. O `database/schema.sql` contém `DROP TABLE` e só deve ser usado uma vez em banco novo e vazio; nunca no deploy recorrente.
 
-`bootstrap.sh` e uma instalacao unica, executada como root com assets `deploy/`, `database/schema.sql` e `authorized_key.pub`. Aborta se detectar instalacao ou usuarios existentes do FinancialApp. Nao usar para atualizar a aplicacao; atualizacoes usam `release.sh`. Nao reiniciar Docker, PM2 ou outros servicos globalmente.
+Não há backup agendado provisionado. Exemplo de backup manual exclusivo, executado como root na VPS:
+
+```sh
+set -euo pipefail
+umask 0077
+install -d -m 700 /srv/financialapp/backups
+. /etc/financialapp/mysql.env
+backup_file="/srv/financialapp/backups/financialapp-$(date -u +%Y%m%dT%H%M%SZ).sql.gz"
+docker exec -e MYSQL_PWD="$MYSQL_ROOT_PASSWORD" financialapp-mysql \
+  mysqldump -uroot --single-transaction --no-tablespaces --routines --triggers \
+  --databases financialapp | gzip > "$backup_file"
+gzip -t "$backup_file"
+unset MYSQL_ROOT_PASSWORD MYSQL_PASSWORD
+```
+
+Esse exemplo documenta o procedimento; não é uma confirmação de backup executado. Guarde uma cópia protegida fora da VPS e valide a restauração em banco isolado. Não restaure sobre produção sem uma decisão explícita sobre os dados substituídos. Não copie o diretório MySQL em uso como substituto de um backup consistente.
+
+Para reverter código, prefira um commit de reversão revisado em `main`, que aciona o mesmo workflow. Antes de futuras migrações, faça backup e verifique compatibilidade com a versão anterior; o rollback automático não restaura dados.
+
+Releases antigas e tentativas interrompidas são preservadas. Monitore espaço em disco. Qualquer limpeza deve conferir caminhos absolutos dentro de `/srv/financialapp`, preservar `releases/current`, dados e backups, e não tocar nos outros projetos.
+
+## Pendências funcionais
+
+- E-mail adiado pelo proprietário: configurar `SMTP_USER`, `SMTP_PASS` e `MAIL_FROM`; cadastro e recuperação dependem disso.
+- Google OAuth e IA: configurar credenciais próprias e testar os fluxos antes de considerá-los habilitados.
+- Backup periódico e testes de restauração: ainda não provisionados.
+- Android: sobrescrever a API legada no build; nenhum APK novo foi validado.
+
+Veja [Configuração](../docs/CONFIGURACAO.md) e [Estado da implantação](../docs/ESTADO_ATUAL.md).
+
+## Bootstrap e configurações legadas
+
+[bootstrap.sh](bootstrap.sh) é um instalador único para root, com assets `deploy/`, `database/schema.sql` e `authorized_key.pub`. Aborta se detectar instalação/usuários existentes do FinancialApp. Não é um atualizador e não deve ser repetido nesta VPS. A importação do bloco do Caddy é uma etapa controlada separada.
+
+Os scripts KingHost e PM2 continuam no repositório por compatibilidade; a produção atual usa systemd e o workflow VPS. Consulte o [índice](../docs/INDICE_DOCUMENTACAO.md) para referências históricas.

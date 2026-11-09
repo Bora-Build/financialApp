@@ -1,134 +1,80 @@
-# Financial App
+# SelfMoney — FinancialApp
 
-Aplicativo de controle financeiro pessoal com React, TypeScript e API Node.js.
+Aplicativo de controle financeiro pessoal com React, TypeScript e API Node.js/Express com MySQL.
+
+**Produção:** https://selfmoney.lafdev.com.br
+
+**Repositório:** https://github.com/lucasandrefernando/financialApp
+
+## Documentação
+
+| Assunto | Guia |
+| --- | --- |
+| Desenvolvimento e comandos locais | [Início rápido](docs/INICIO_RAPIDO.md) |
+| Arquitetura e componentes | [Arquitetura](docs/ARQUITETURA.md) |
+| Variáveis e integrações | [Configuração](docs/CONFIGURACAO.md) |
+| Deploy, secrets, logs, backup e rollback | [Operação na VPS](deploy/README.md) |
+| Diagnóstico de falhas | [Troubleshooting](docs/TROUBLESHOOTING.md) |
+| API principal e proxy de IA legado | [Backend](backend/README.md) |
+| Situação validada e pendências | [Estado da implantação](docs/ESTADO_ATUAL.md) |
+| Todos os documentos e histórico | [Índice](docs/INDICE_DOCUMENTACAO.md) |
 
 ## Tecnologias
 
-- Frontend: React 18, TypeScript, Vite, Tailwind CSS
-- Backend: Node.js + Express + MySQL
-- Estado: Zustand + TanStack Query
-- Graficos: Recharts
-- Formularios: React Hook Form + Zod
+React 18, TypeScript, Vite, Tailwind CSS, Zustand, TanStack Query, React Hook Form, Zod, Recharts, Express e MySQL. A produção usa Node.js 24, systemd, Docker para o banco exclusivo, Caddy e GitHub Actions.
 
-## Setup local
+## Desenvolvimento
 
-### Pre-requisitos
+Use Node.js 24 e o lockfile do projeto:
 
-- Node.js 18+
-
-### Variaveis de ambiente
-
-Crie um arquivo `.env.local` na raiz com os valores do frontend.
-
-### Instalar e rodar
-
-```bash
-npm install
+```sh
+npm ci
 npm run dev
 ```
 
-### Build
+O frontend abre em `http://localhost:5173`. Login e dados exigem a API principal em `127.0.0.1:21149` e um banco local configurado; `npm run dev` sozinho inicia apenas o Vite. Siga o [guia local](docs/INICIO_RAPIDO.md) para iniciar os dois processos.
 
-```bash
+```sh
+npm run lint
+npm run type-check
 npm run build
 ```
 
-## Banco de dados
+No PowerShell, use `npm.cmd` se a política de execução bloquear `npm.ps1`.
 
-O schema SQL esta em `database/schema.sql`.
+## Publicação
 
-## Deploy na KingHost (Node.js + Git)
+Cada push em `main` executa `.github/workflows/deploy.yml`: valida o código, compila para `/`, envia a release por SSH e reinicia somente `financialapp.service`. O deploy confere página e banco e volta à release anterior se a verificação falhar. O schema inicial não é reaplicado.
 
-Este projeto foi ajustado para o mesmo formato do Portfolio que ja funciona na KingHost:
-- arquivo de entrada pronto: `FinancialApp.js`
-- frontend pronto em `public/`
+Os cinco secrets são `VPS_HOST`, `VPS_PORT`, `VPS_USER`, `VPS_SSH_KEY` e `VPS_KNOWN_HOSTS`. Já foram validados em um [deploy real](https://github.com/lucasandrefernando/financialApp/actions/runs/42618478590). Consulte os valores públicos e a operação em [deploy/README.md](deploy/README.md).
 
-### Passo a passo rapido
+Zaralho, LucFlix e monitoramento estão fora do escopo desta aplicação e não podem ser modificados. As regras persistentes estão em [AGENTS.md](AGENTS.md).
 
-1. Configure os secrets/vars do projeto.
-2. Rode build completo para KingHost:
+## Banco e integrações
 
-```bash
-npm install
-npm run build:kinghost
+O banco de produção é exclusivo do SelfMoney. `database/schema.sql` cria as tabelas e categorias iniciais, mas contém `DROP TABLE`: use somente em um banco novo e vazio. Nunca reaplique esse arquivo em produção para atualizar código.
+
+E-mail de confirmação e recuperação está pendente por decisão do proprietário. Novos usuários não conseguem concluir o cadastro até configurar `SMTP_USER` e `SMTP_PASS`. Google OAuth e IA também dependem de credenciais próprias. Veja [Configuração](docs/CONFIGURACAO.md).
+
+## Android
+
+Os scripts Capacitor permanecem disponíveis. O padrão de API em `scripts/build-android-web.mjs` ainda é o endereço legado; sobrescreva explicitamente ao gerar um APK para esta produção:
+
+```powershell
+$env:VITE_API_URL = 'https://selfmoney.lafdev.com.br'
+$env:VITE_APP_BASE_PATH = '/'
+npm.cmd run android:prepare
+npm.cmd run android:open
 ```
 
-3. No painel Node.js da KingHost:
-- Caminho da aplicacao: `/financialApp`
-- Script: `FinancialApp.js`
-- Acesso Web: `SIM`
-- SSL: `SIM`
+Com Java, Android SDK e Gradle configurados para o projeto:
 
-4. Variaveis recomendadas para KingHost:
-- `PORT=21149`
-- `HOST=0.0.0.0`
-- `APP_BASE_PATH=/financialApp`
-- `VITE_APP_BASE_PATH=/financialApp/`
-- `DB_HOST`, `DB_USER`, `DB_PASS`, `DB_NAME`
-- `JWT_SECRET`, `JWT_REFRESH_SECRET`
-- `GROQ_API_KEY` (se usar insights IA no backend)
-- `SMTP_USER`, `SMTP_PASS`, `MAIL_FROM` (recuperacao de senha)
-
-5. Opcional com PM2:
-
-```bash
-npm run pm2:kinghost:start
-npm run pm2:kinghost:logs
+```powershell
+npm.cmd run android:apk:debug
 ```
 
-## CI/CD (GitHub Actions)
+Saída esperada: `android/app/build/outputs/apk/debug/app-debug.apk`. Não foi gerado nem validado um novo APK nesta implantação.
 
-O workflow `.github/workflows/deploy.yml` agora publica o SelfMoney na VPS a cada push em `main`, com build, lint, SSH exclusivo, verificacao de saude e rollback de codigo. Ele substitui a antiga geracao de commits de build para KingHost.
+## Configurações anteriores
 
-Configuracao, secrets, DNS e operacao estao em [deploy/README.md](deploy/README.md).
-
-## APK Android (Capacitor)
-
-Este projeto ja esta preparado para gerar APK Android usando Capacitor.
-
-### Pre-requisitos
-
-- Java JDK 17 (ou superior) instalado
-- `JAVA_HOME` configurado no Windows
-- Android Studio instalado (com Android SDK e Build Tools)
-
-### Comandos
-
-1. Instalar dependencias:
-
-```bash
-npm install
-```
-
-2. Gerar build web para Android (com API apontando para producao) e sincronizar:
-
-```bash
-npm run android:prepare
-```
-
-3. Abrir projeto Android no Android Studio:
-
-```bash
-npm run android:open
-```
-
-4. Gerar APK debug via terminal (opcional):
-
-```bash
-npm run android:apk:debug
-```
-
-O arquivo final fica em:
-
-`android/app/build/outputs/apk/debug/app-debug.apk`
-
-### Observacoes
-
-- O build Android usa, por padrao:
-  - `VITE_API_URL=https://anacron.com.br/financialApp`
-  - `VITE_APP_BASE_PATH=/`
-- Para trocar a API no APK, rode com variavel customizada:
-
-```bash
-$env:VITE_API_URL="https://seu-dominio.com/financialApp"; npm run android:prepare
-```
+Os scripts KingHost e PM2 foram preservados por compatibilidade, mas não gerenciam a produção atual. Os guias antigos estão identificados como históricos no [índice](docs/INDICE_DOCUMENTACAO.md).

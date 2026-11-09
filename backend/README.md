@@ -1,82 +1,41 @@
-# Backend - Proxy Groq AI
+# Backend do SelfMoney
 
-Servidor Node.js com Express que faz proxy das requisições para a API do Groq.
+## API principal em produção
 
-## 🚀 Instalação
+O entrypoint de produção é [FinancialApp.js](../FinancialApp.js), na raiz. Ele importa `backend/db.js`, middleware e rotas desta pasta, e também serve o frontend compilado.
 
-1. **Instale as dependências:**
-   ```bash
-   cd backend
-   npm install
-   ```
+Na VPS, `financialapp.service` executa `node FinancialApp.js` como usuário `financialapp`, ouvindo somente `127.0.0.1:21149`. O ambiente vem de `/etc/financialapp/app.env`, e o MySQL exclusivo atende em `127.0.0.1:3310`.
 
-2. **Configure as variáveis de ambiente:**
-   - Copie `.env.example` para `.env`
-   - Adicione sua chave do Groq API em `GROQ_API_KEY`
+| Rota | Finalidade |
+| --- | --- |
+| `GET /health` | Saúde do processo HTTP |
+| `GET /health/db` | Teste `SELECT 1` no banco; 503 se indisponível |
+| `/api/auth` | Cadastro, login, tokens, perfil, e-mail, passkeys e Google OAuth |
+| `/api/accounts`, `/api/sharing` | Contas e compartilhamento |
+| `/api/categories`, `/api/income`, `/api/transactions` | Categorias e movimentações |
+| `/api/budgets`, `/api/goals` | Orçamentos e metas |
+| `/api/dashboard`, `/api/insights` | Resumos e insights |
+| `/api/onboarding`, `/api/sync` | Onboarding e sincronização |
+| `/api/media/:assetId` | Imagens de login permitidas pelo servidor |
 
-## 🏃 Como Rodar
+As regras de autenticação e métodos disponíveis são definidos em cada arquivo de rota. O cliente autenticado envia `Authorization: Bearer <token>`. Não confunda saúde do banco com aprovação de todos os fluxos funcionais.
 
-### Desenvolvimento (com hot reload):
-```bash
+Para desenvolvimento, instale as dependências na raiz e siga [Início rápido](../docs/INICIO_RAPIDO.md). O servidor principal não carrega `.env` automaticamente. As variáveis e integrações estão em [Configuração](../docs/CONFIGURACAO.md).
+
+## Proxy opcional de IA: implementação legada
+
+`backend/src/index.js` é outro servidor Express, com seu próprio `backend/package.json`. Não está instalado como serviço na produção atual e não oferece a API financeira acima.
+
+Para executá-lo separadamente em ambiente local:
+
+```sh
+cd backend
+npm ci
 npm run dev
 ```
 
-### Produção:
-```bash
-npm start
-```
+Defina `GROQ_API_KEY` em um `.env` local ignorado ou no processo. Esse entrypoint usa `dotenv` e porta padrão **3001**, sobrescrita por `PORT`.
 
-O servidor iniciará em `http://localhost:3000`
+Rotas desse servidor separado: `GET /health`, `POST /api/ai/generate`, `POST /api/ai/insights` e `POST /api/ai/anomalies`. São endpoints de proxy de IA, não rotas automaticamente expostas pelo FinancialApp principal. Não publique esse proxy adicional na VPS sem um escopo próprio de implantação.
 
-## 📡 Endpoints Disponíveis
-
-### Health Check
-- **GET** `/health`
-- Verifica se o servidor está rodando
-
-### Gerar conteúdo
-- **POST** `/api/ai/generate`
-- Body:
-  ```json
-  {
-    "prompt": "Sua pergunta aqui",
-    "temperature": 0.2,
-    "maxTokens": 256
-  }
-  ```
-
-### Gerar Insights
-- **POST** `/api/ai/insights`
-- Body:
-  ```json
-  {
-    "data": {/* seus dados financeiros */},
-    "period": "monthly"
-  }
-  ```
-
-### Detectar Anomalias
-- **POST** `/api/ai/anomalies`
-- Body:
-  ```json
-  {
-    "transactions": [/* array de transações */]
-  }
-  ```
-
-## ⚠️ Importante
-
-- Certifique-se de que o backend está rodando na porta 3000 antes de iniciar o frontend
-- o frontend faz requisições para `http://localhost:3000`
-- A chave do Groq API deve estar configurada em `.env`
-
-## 🔧 Troubleshooting
-
-**Erro de conexão recusada:**
-- Verifique se o backend está rodando
-- Verifique se você está na pasta `backend`
-- Tente `npm install` novamente
-
-**Erro de API Key inválida:**
-- Verifique se a chave está correta em `.env`
-- Gere uma nova chave em https://console.groq.com/keys
+A API principal já possui `/api/insights` e sua integração opcional Groq. Veja [Arquitetura](../docs/ARQUITETURA.md) e [Operação](../deploy/README.md).
