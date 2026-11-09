@@ -31,8 +31,11 @@ O proprietário autorizou a inclusão do bloco exclusivo do SelfMoney no Caddy, 
 | Bloco Caddy exclusivo | `/etc/caddy/selfmoney.caddy` |
 | Limites da aplicação | 512 MiB e até 1 CPU |
 | Limites do MySQL | 768 MiB e até 0,75 CPU |
+| Cache InnoDB | 64 MiB, chunks de 16 MiB |
 
 Os arquivos `.env` da VPS são restritos a root. O usuário de deploy não precisa lê-los: o systemd injeta o ambiente ao iniciar a aplicação. A chave de deploy permite sudo somente para reiniciar/parar `financialapp.service`.
+
+Os limites acima são tetos, não reservas de RAM. O cache InnoDB foi reduzido de 128 para 64 MiB após medir o banco em 09/11/2026. O ajuste da instância existente foi persistido pelo MySQL e sobrevive ao restart do container; não depende de executar o bootstrap novamente. Veja [medições e manutenção](../docs/MEMORIA.md).
 
 ## DNS, TLS e proxy
 
@@ -142,6 +145,8 @@ Não publique logs contendo tokens, dados pessoais ou credenciais. Não imprima 
 Foi criado um banco novo, com 12 tabelas iniciais e categorias, sem migrar dados antigos. Rotas de autenticação podem criar tabelas e ajustar colunas adicionais em tempo de execução. O `database/schema.sql` contém `DROP TABLE` e só deve ser usado uma vez em banco novo e vazio; nunca no deploy recorrente.
 
 Não há backup agendado provisionado. Exemplo de backup manual exclusivo, executado como root na VPS:
+
+Um backup manual já foi criado e validado pelo ajuste de memória em `/srv/financialapp/backups/before-memory-tuning-20261109T125607Z.sql.gz`. Isso não configura backup periódico nem substitui um teste de restauração.
 
 ```sh
 set -euo pipefail

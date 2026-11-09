@@ -19,3 +19,5 @@ A aplicação usa `financialapp.service`, usuário `financialapp` e `127.0.0.1:2
 Os cinco repository secrets foram cadastrados e o workflow VPS foi validado com sucesso. Cada push em `main`, inclusive documentação, aciona o deploy. O workflow não instala automaticamente os modelos de infraestrutura em `deploy/` e nunca deve reaplicar `database/schema.sql`, que contém DROP TABLE.
 
 Não considerar saúde HTTP/banco como validação de todos os fluxos: e-mail foi adiado pelo proprietário; Google OAuth, IA, APK e backups agendados não foram validados/provisionados nesta implantação. Consultar `docs/ESTADO_ATUAL.md` e `deploy/README.md` antes de operar.
+
+O cache InnoDB foi ajustado e persistido em 64 MiB, com chunks de 16 MiB, após medição e backup manual em 09/11/2026. Consultar `docs/MEMORIA.md` antes de novos ajustes. Limites systemd/Docker são tetos, não reservas; distinguir memória disponível, RSS, cgroup e cache do Linux. Não limpar caches globais nem alterar serviços de outros projetos para reduzir um gráfico de memória.

@@ -66,7 +66,7 @@ docker run -d --name financialapp-mysql --restart unless-stopped \
   --env-file /etc/financialapp/mysql.env \
   -p 127.0.0.1:3310:3306 \
   --mount type=bind,source="$base/shared/mysql",target=/var/lib/mysql \
-  mysql:8.4 --innodb-buffer-pool-size=134217728 --max-connections=30 --performance-schema=OFF
+  mysql:8.4 --innodb-buffer-pool-size=67108864 --innodb-buffer-pool-chunk-size=16777216 --max-connections=30 --performance-schema=OFF
 ready=false
 for attempt in {1..90}; do
   if docker exec -e MYSQL_PWD="$db_root_password" financialapp-mysql mysql -h127.0.0.1 -uroot -Nse 'SELECT 1' >/dev/null 2>&1; then

@@ -15,6 +15,7 @@ Aplicativo de controle financeiro pessoal com React, TypeScript e API Node.js/Ex
 | Variáveis e integrações | [Configuração](docs/CONFIGURACAO.md) |
 | Deploy, secrets, logs, backup e rollback | [Operação na VPS](deploy/README.md) |
 | Diagnóstico de falhas | [Troubleshooting](docs/TROUBLESHOOTING.md) |
+| Consumo de RAM e ajuste do banco | [Memória](docs/MEMORIA.md) |
 | API principal e proxy de IA legado | [Backend](backend/README.md) |
 | Situação validada e pendências | [Estado da implantação](docs/ESTADO_ATUAL.md) |
 | Todos os documentos e histórico | [Índice](docs/INDICE_DOCUMENTACAO.md) |

@@ -12,6 +12,7 @@ Revisado em **09/11/2026**, após implantação e teste real do GitHub Actions.
 | [Configuração](CONFIGURACAO.md) | Variáveis públicas, segredos e integrações |
 | [Operação na VPS](../deploy/README.md) | SSH, secrets, deploy, logs, backup e rollback |
 | [Troubleshooting](TROUBLESHOOTING.md) | DNS, TLS, loops, Actions, banco e e-mail |
+| [Memória](MEMORIA.md) | Medições, cache do Linux e ajuste exclusivo do MySQL |
 | [Backend](../backend/README.md) | API principal e distinção do proxy de IA legado |
 | [Estado atual](ESTADO_ATUAL.md) | Evidências da validação e pendências conhecidas |
 | [Regras de implantação](../AGENTS.md) | Proteção expressa de Zaralho e LucFlix |
