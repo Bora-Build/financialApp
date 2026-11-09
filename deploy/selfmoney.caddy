@@ -1,3 +1,4 @@
-selfmoney.lafdev.com.br {
+# Boa Host terminates public HTTPS and forwards HTTP to this VPS.
+http://selfmoney.lafdev.com.br {
     reverse_proxy 127.0.0.1:21149
 }

@@ -17,7 +17,7 @@ Endereco planejado: https://selfmoney.lafdev.com.br
 
 Criar registro DNS `A`, nome `selfmoney`, valor `103.204.193.6`. Nao criar AAAA sem IPv6 funcional. As portas publicas 80 e 443 precisam chegar ao Caddy desta VPS para HTTPS automatico; verificar o encaminhamento no painel da hospedagem, pois a interface da VPS usa endereco privado.
 
-O bloco exclusivo em `selfmoney.caddy` e importado pelo Caddy sem modificar as rotas dos outros projetos. O reload do Caddy foi autorizado expressamente pelo proprietario. O certificado depende do DNS e do encaminhamento externo.
+O bloco exclusivo em `selfmoney.caddy` e importado pelo Caddy sem modificar as rotas dos outros projetos. O reload do Caddy foi autorizado expressamente pelo proprietario. A Boa Host termina o HTTPS publico e encaminha HTTP para a VPS: o bloco interno deve usar `http://selfmoney.lafdev.com.br`, evitando um ciclo de redirecionamento HTTPS. O certificado publico e gerenciado nessa camada externa.
 
 A regra `443/tcp` foi liberada no UFW com autorizacao expressa. Nenhuma regra existente foi removida ou substituida.
 
