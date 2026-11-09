@@ -46,7 +46,7 @@ NODE_ENV=production
 HOST=127.0.0.1
 PORT=21149
 APP_BASE_PATH=/
-APP_URL=https://selfmoney.lafdav.com.br
+APP_URL=https://selfmoney.lafdev.com.br
 DB_HOST=127.0.0.1
 DB_PORT=3310
 DB_USER=financialapp
@@ -55,7 +55,7 @@ DB_NAME=financialapp
 JWT_SECRET=$(openssl rand -hex 48)
 JWT_REFRESH_SECRET=$(openssl rand -hex 48)
 WEBAUTHN_RP_NAME=SelfMoney
-WEBAUTHN_RP_ID=selfmoney.lafdav.com.br
+WEBAUTHN_RP_ID=selfmoney.lafdev.com.br
 # Email, Google OAuth and AI credentials are intentionally not configured.
 EOF
 chmod 600 /etc/financialapp/*.env

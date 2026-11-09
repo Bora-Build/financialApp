@@ -1,6 +1,6 @@
 # SelfMoney na VPS
 
-Endereco planejado: https://selfmoney.lafdav.com.br
+Endereco planejado: https://selfmoney.lafdev.com.br
 
 ## Isolamento
 

@@ -8,4 +8,4 @@ O FinancialApp deve ter diretórios, usuário de execução, credenciais, banco 
 
 Nunca gravar senhas, chaves privadas ou tokens no repositório. Usar secrets do GitHub Actions e configuração protegida exclusiva do FinancialApp na VPS.
 
-Autorizações específicas recebidas nesta implantação: acrescentar somente o bloco `selfmoney.lafdav.com.br` no Caddy e recarregar o Caddy após validação, preservando as rotas existentes; acrescentar somente a regra de firewall `ufw allow 443/tcp`. Essas operações foram concluídas. Não ampliam a autorização para outras mudanças globais ou nos projetos protegidos.
+Autorizações específicas recebidas nesta implantação: acrescentar somente o bloco `selfmoney.lafdev.com.br` no Caddy e recarregar o Caddy após validação, preservando as rotas existentes; acrescentar somente a regra de firewall `ufw allow 443/tcp`. Essas operações foram concluídas. Não ampliam a autorização para outras mudanças globais ou nos projetos protegidos.
