@@ -19,6 +19,8 @@ Criar registro DNS `A`, nome `selfmoney`, valor `103.204.193.6`. Nao criar AAAA 
 
 O bloco exclusivo em `selfmoney.caddy` e importado pelo Caddy sem modificar as rotas dos outros projetos. O reload do Caddy foi autorizado expressamente pelo proprietario. O certificado depende do DNS e do encaminhamento externo.
 
+A regra `443/tcp` foi liberada no UFW com autorizacao expressa. Nenhuma regra existente foi removida ou substituida.
+
 ## Secrets do GitHub Actions
 
 Em Settings > Secrets and variables > Actions > New repository secret:
